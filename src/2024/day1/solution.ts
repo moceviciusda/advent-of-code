@@ -8,7 +8,7 @@ const isTwoStringArray = (input: unknown): input is [string, string] => {
   return true;
 };
 
-export function part1(input: string): number {
+const parseInput = (input: string): [number[], number[]] => {
   const lines = input.split('\r\n');
 
   const list1: number[] = [];
@@ -47,6 +47,12 @@ export function part1(input: string): number {
     }
   }
 
+  return [list1, list2];
+};
+
+export function part1(input: string): number {
+  const [list1, list2] = parseInput(input);
+
   let totalDistance: number = 0;
 
   for (let i = 0; i < list1.length; i++) {
@@ -56,10 +62,32 @@ export function part1(input: string): number {
   return totalDistance;
 }
 
-part1(readInput('day1', '2024', 'example.txt'));
+export function part2(input: string): number {
+  const [list1, list2] = parseInput(input);
 
-export function part2(input: string) {
-  const lines = input.split('\n');
+  let similarityScore: number = 0;
 
-  return 0;
+  let list2Idx: number = 0;
+  let lastScore: number = 0;
+
+  for (let i = 0; i < list1.length; i++) {
+    const id = list1[i];
+
+    if (id === list1[i - 1]) {
+      similarityScore += lastScore;
+      continue;
+    }
+
+    lastScore = 0;
+    for (; list2Idx < list2.length; list2Idx++) {
+      if (list2[list2Idx] < id) continue;
+      if (list2[list2Idx] > id) break;
+
+      lastScore += id;
+    }
+
+    similarityScore += lastScore;
+  }
+
+  return similarityScore;
 }
