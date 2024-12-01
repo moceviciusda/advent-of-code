@@ -1,5 +1,3 @@
-import { readInput } from '../../utils/input';
-
 const isTwoStringArray = (input: unknown): input is [string, string] => {
   if (!Array.isArray(input)) return false;
   if (input.length !== 2) return false;
