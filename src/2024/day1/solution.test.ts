@@ -13,13 +13,13 @@ describe(day, () => {
   const input = readInput(day, year, 'example.txt');
   describe('Part 1', () => {
     it('should solve example input', () => {
-      expect(part1(input)).toBe(0);
+      expect(part1(input)).toBe(11);
     });
   });
 
   describe('Part 2', () => {
     it('should solve example input', () => {
-      expect(part2(input)).toBe(0);
+      expect(part2(input)).toBe(31);
     });
   });
 
