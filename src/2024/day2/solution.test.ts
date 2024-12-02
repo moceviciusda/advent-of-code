@@ -19,7 +19,7 @@ describe(day, () => {
 
   describe('Part 2', () => {
     it('should solve example input', () => {
-      expect(part2(input)).toBe(31);
+      expect(part2(input)).toBe(4);
     });
   });
 
