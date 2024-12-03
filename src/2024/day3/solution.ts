@@ -22,6 +22,8 @@ enum TokenType {
   NUMBER,
 
   MUL,
+  DO,
+  DONT,
 
   UNSUPPORTED,
 
@@ -44,6 +46,7 @@ interface Scanner {
   advance: () => string;
   isAtEnd: () => boolean;
   peek: () => string;
+  peekNext: () => string;
   addToken: (type: TokenType, literal?: number) => void;
   scanTokens: () => Token[];
   scanToken: () => void;
@@ -54,6 +57,8 @@ interface Scanner {
 function newScanner(input: string): Scanner {
   const keywords = new Map<string, TokenType>();
   keywords.set('mul', TokenType.MUL);
+  keywords.set('do', TokenType.DO);
+  keywords.set("don't", TokenType.DONT);
 
   const scanner: Scanner = {
     input,
@@ -65,6 +70,10 @@ function newScanner(input: string): Scanner {
     advance: () => scanner.input[scanner.current++],
     isAtEnd: () => scanner.current >= scanner.input.length,
     peek: () => (scanner.isAtEnd() ? '\0' : scanner.input[scanner.current]),
+    peekNext: () =>
+      scanner.current + 1 >= scanner.input.length
+        ? '\0'
+        : scanner.input[scanner.current + 1],
 
     addToken: (type: TokenType, literal?: number) => {
       const lexeme = scanner.input.substring(scanner.start, scanner.current);
@@ -124,8 +133,18 @@ function newScanner(input: string): Scanner {
     identifier: () => {
       while (isAlphaNumeric(scanner.peek())) scanner.advance();
 
+      // allow a single ' in identifiers
+      if (scanner.peek() === "'" && isAlphaNumeric(scanner.peekNext())) {
+        scanner.advance();
+
+        while (isAlphaNumeric(scanner.peek())) scanner.advance();
+      }
+
       const lexeme = scanner.input.substring(scanner.start, scanner.current);
-      if (lexeme.endsWith('mul')) scanner.addToken(TokenType.MUL);
+
+      for (let [key, val] of scanner.keywords) {
+        if (lexeme.endsWith(key)) scanner.addToken(val);
+      }
 
       // let tokenType = scanner.keywords.get(lexeme);
       // if (!tokenType) tokenType = TokenType.IDENTIFIER;
@@ -142,6 +161,9 @@ export function part1(input: string): number {
 
   let sum: number = 0;
   for (let i = 0; i < tokens.length; i++) {
+    // not enough tokens left to make a valid mul()
+    if (i >= tokens.length - 6) break;
+
     if (tokens[i].type !== TokenType.MUL) continue;
     if (tokens[i + 1].type !== TokenType.LEFT_PAREN) continue;
     if (tokens[i + 2].type !== TokenType.NUMBER) continue;
@@ -154,12 +176,58 @@ export function part1(input: string): number {
     if (typeof n1 !== 'number' || typeof n2 !== 'number')
       throw new Error('Invalid number');
 
-    sum += n1 * n1;
+    sum += n1 * n2;
+    i += 5;
   }
 
   return sum;
 }
 
 export function part2(input: string): number {
-  return 0;
+  const scanner = newScanner(input);
+  const tokens = scanner.scanTokens();
+
+  let sum: number = 0;
+  let mulEnabled: boolean = true;
+  for (let i = 0; i < tokens.length; i++) {
+    // not enough tokens left to make a valid mul()
+    if (i >= tokens.length - 6) break;
+
+    if (tokens[i].type === TokenType.DONT) {
+      if (tokens[i + 1].type !== TokenType.LEFT_PAREN) continue;
+      if (tokens[i + 2].type !== TokenType.RIGT_PAREN) continue;
+
+      mulEnabled = false;
+      i += 2;
+      continue;
+    }
+
+    if (tokens[i].type === TokenType.DO) {
+      if (tokens[i + 1].type !== TokenType.LEFT_PAREN) continue;
+      if (tokens[i + 2].type !== TokenType.RIGT_PAREN) continue;
+
+      mulEnabled = true;
+      i += 2;
+      continue;
+    }
+
+    if (!mulEnabled) continue;
+
+    if (tokens[i].type !== TokenType.MUL) continue;
+    if (tokens[i + 1].type !== TokenType.LEFT_PAREN) continue;
+    if (tokens[i + 2].type !== TokenType.NUMBER) continue;
+    if (tokens[i + 3].type !== TokenType.COMMA) continue;
+    if (tokens[i + 4].type !== TokenType.NUMBER) continue;
+    if (tokens[i + 5].type !== TokenType.RIGT_PAREN) continue;
+
+    const n1 = tokens[i + 2].literal;
+    const n2 = tokens[i + 4].literal;
+    if (typeof n1 !== 'number' || typeof n2 !== 'number')
+      throw new Error('Invalid number');
+
+    sum += n1 * n2;
+    i += 5;
+  }
+
+  return sum;
 }
