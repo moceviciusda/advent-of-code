@@ -63,6 +63,10 @@ const newMatrix: (rows: string[]) => Matrix = (rows) => {
           m.scanDiagonal();
         }
 
+        if (m.getPosValue() === 'A') {
+          m.scanX();
+        }
+
         m.advance();
       }
     },
@@ -73,7 +77,7 @@ const newMatrix: (rows: string[]) => Matrix = (rows) => {
       const word = m.rows[m.pos.y].substring(m.pos.x, m.pos.x + 4);
       if (word === 'XMAS' || word === 'SAMX') {
         m.total++;
-        m.draw({ x: m.pos.x, y: m.pos.y });
+        m.draw(m.pos);
         m.draw({ x: m.pos.x + 1, y: m.pos.y });
         m.draw({ x: m.pos.x + 2, y: m.pos.y });
         m.draw({ x: m.pos.x + 3, y: m.pos.y });
@@ -90,7 +94,7 @@ const newMatrix: (rows: string[]) => Matrix = (rows) => {
 
       if (word === 'XMAS' || word === 'SAMX') {
         m.total++;
-        m.draw({ x: m.pos.x, y: m.pos.y });
+        m.draw(m.pos);
         m.draw({ x: m.pos.x, y: m.pos.y + 1 });
         m.draw({ x: m.pos.x, y: m.pos.y + 2 });
         m.draw({ x: m.pos.x, y: m.pos.y + 3 });
@@ -106,7 +110,7 @@ const newMatrix: (rows: string[]) => Matrix = (rows) => {
           m.getPosValue({ x: m.pos.x + 3, y: m.pos.y + 3 });
         if (word === 'XMAS' || word === 'SAMX') {
           m.total++;
-          m.draw({ x: m.pos.x, y: m.pos.y });
+          m.draw(m.pos);
           m.draw({ x: m.pos.x + 1, y: m.pos.y + 1 });
           m.draw({ x: m.pos.x + 2, y: m.pos.y + 2 });
           m.draw({ x: m.pos.x + 3, y: m.pos.y + 3 });
@@ -121,7 +125,7 @@ const newMatrix: (rows: string[]) => Matrix = (rows) => {
           m.getPosValue({ x: m.pos.x - 3, y: m.pos.y + 3 });
         if (word === 'XMAS' || word === 'SAMX') {
           m.total++;
-          m.draw({ x: m.pos.x, y: m.pos.y });
+          m.draw(m.pos);
           m.draw({ x: m.pos.x - 1, y: m.pos.y + 1 });
           m.draw({ x: m.pos.x - 2, y: m.pos.y + 2 });
           m.draw({ x: m.pos.x - 3, y: m.pos.y + 3 });
@@ -129,7 +133,31 @@ const newMatrix: (rows: string[]) => Matrix = (rows) => {
       }
     },
 
-    scanX: () => {},
+    scanX: () => {
+      if (
+        m.pos.x <= 0 ||
+        m.pos.x >= m.width ||
+        m.pos.y <= 0 ||
+        m.pos.y >= m.height
+      )
+        return;
+
+      let word =
+        m.getPosValue({ x: m.pos.x + 1, y: m.pos.y - 1 }) +
+        m.getPosValue() +
+        m.getPosValue({ x: m.pos.x - 1, y: m.pos.y + 1 });
+
+      if (word !== 'MAS' && word !== 'SAM') return;
+
+      word =
+        m.getPosValue({ x: m.pos.x - 1, y: m.pos.y - 1 }) +
+        m.getPosValue() +
+        m.getPosValue({ x: m.pos.x + 1, y: m.pos.y + 1 });
+
+      if (word !== 'MAS' && word !== 'SAM') return;
+
+      m.totalX++;
+    },
 
     printCanvas: () => m.canvas.forEach((row) => console.log(row.join(''))),
   };
@@ -147,5 +175,9 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  return 0;
+  const puzzle = newMatrix(input.split('\r\n'));
+
+  puzzle.scan();
+
+  return puzzle.totalX;
 }
