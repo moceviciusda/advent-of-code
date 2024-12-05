@@ -18,14 +18,14 @@ const parseInput = (input: string): [OrderingRules, Update[]] => {
     if (beforeRule) {
       beforeRule.after.push(after);
     } else {
-      rules.set(before, { before: [], after: [] });
+      rules.set(before, { before: [], after: [after] });
     }
 
     const afterRule = rules.get(after);
     if (afterRule) {
       afterRule.before.push(before);
     } else {
-      rules.set(after, { before: [], after: [] });
+      rules.set(after, { before: [before], after: [] });
     }
   });
 
@@ -57,6 +57,27 @@ const getMiddlePage = (update: Update): number => {
   return Number(update[Math.floor(update.length / 2)]);
 };
 
+const fixOrder = (update: Update, rules: OrderingRules): Update => {
+  const ordered: Update = [];
+
+  for (let i = 0; i < update.length; i++) {
+    const page = update[i];
+    const pageRules = rules.get(page);
+
+    let insertAt = 0;
+
+    for (; insertAt < ordered.length; insertAt++) {
+      const orderedPage = ordered[insertAt];
+
+      if (pageRules?.after.includes(orderedPage)) break;
+    }
+
+    ordered.splice(insertAt, 0, page);
+  }
+
+  return ordered;
+};
+
 export function part1(input: string): number {
   const [rules, updates] = parseInput(input);
 
@@ -70,5 +91,16 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  return 0;
+  const [rules, updates] = parseInput(input);
+
+  let middleSum: number = 0;
+
+  updates.forEach((update) => {
+    if (validateUpdate(update, rules)) return;
+
+    const ordered = fixOrder(update, rules);
+    middleSum += getMiddlePage(ordered);
+  });
+
+  return middleSum;
 }
