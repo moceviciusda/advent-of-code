@@ -22,7 +22,7 @@ interface Lab {
 
   guardPos: Position;
   guardDir: Direction;
-  guardPath: Position[];
+  guardPath: (Position & { dir: Direction })[];
 
   walk: () => void;
   hasLeft: () => boolean;
@@ -30,8 +30,10 @@ interface Lab {
   rotate: () => void;
   advance: () => void;
   markPos: () => void;
+  isLoop: () => boolean;
 
   printMap: () => void;
+  reset: () => void;
 }
 
 enum Direction {
@@ -45,14 +47,14 @@ const newLab = (map: LabMap, guardPos: Position): Lab => {
   const lab: Lab = {
     height: map.length - 1,
     width: map[0].length - 1,
-    map: map,
+    map: structuredClone(map),
 
-    guardPos,
+    guardPos: structuredClone(guardPos),
     guardDir: Direction.up,
     guardPath: [],
 
     walk: () => {
-      while (!lab.hasLeft()) {
+      while (!lab.hasLeft() && !lab.isLoop()) {
         lab.markPos();
         lab.advance();
       }
@@ -105,8 +107,16 @@ const newLab = (map: LabMap, guardPos: Position): Lab => {
     },
 
     markPos: () => {
-      lab.guardPath.push({ ...lab.guardPos });
+      lab.guardPath.push({ ...lab.guardPos, dir: lab.guardDir });
     },
+
+    isLoop: () =>
+      lab.guardPath.some(
+        (pos) =>
+          pos.x === lab.guardPos.x &&
+          pos.y === lab.guardPos.y &&
+          pos.dir === lab.guardDir
+      ),
 
     printMap: () => {
       const marked = structuredClone(lab.map);
@@ -117,6 +127,13 @@ const newLab = (map: LabMap, guardPos: Position): Lab => {
 
       console.log('Lab map:');
       marked.forEach((row) => console.log(row.join('')));
+    },
+
+    reset: () => {
+      lab.map = structuredClone(map);
+      lab.guardDir = Direction.up;
+      lab.guardPos = structuredClone(guardPos);
+      lab.guardPath = [];
     },
   };
 
@@ -171,5 +188,25 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  return 0;
+  const lab = parseInput(input);
+
+  lab.walk();
+  const originalPath = structuredClone(lab.guardPath);
+
+  let loopOptions = 0;
+
+  for (let y = 0; y < lab.map.length; y++) {
+    for (let x = 0; x < lab.map[y].length; x++) {
+      // NOTE: skip placing obstructions where guard will never go
+      if (!originalPath.some((pos) => pos.x === x && pos.y === y)) continue;
+
+      lab.reset();
+      lab.map[y][x] = MapItem.obstruction;
+
+      lab.walk();
+      if (lab.isLoop()) loopOptions++;
+    }
+  }
+
+  return loopOptions;
 }
