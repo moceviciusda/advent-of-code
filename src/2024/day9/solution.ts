@@ -14,7 +14,7 @@ const parseInput = (input: string): Block[] => {
   return blocks;
 };
 
-const compactFiles = (blocks: Block[]) => {
+const fragmentedCompact = (blocks: Block[]) => {
   for (let i = 0; i < blocks.length; i++) {
     if (typeof blocks[i] !== 'undefined') continue;
 
@@ -37,15 +37,48 @@ const calculateChecksum = (blocks: Block[]): number => {
   return checksum;
 };
 
+const compact = (blocks: Block[]) => {
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    if (typeof blocks[i] === 'undefined') continue;
+
+    let fromIdx: number = i;
+    while (blocks[fromIdx] === blocks[i]) fromIdx--;
+    fromIdx++;
+
+    const blocksToMove = blocks.slice(fromIdx, i + 1);
+
+    for (let j = 0; j + blocksToMove.length <= fromIdx; j++) {
+      if (typeof blocks[j] !== 'undefined') continue;
+
+      let emptyLength: number = 1;
+      while (typeof blocks[j + emptyLength] === 'undefined') emptyLength++;
+
+      if (emptyLength >= blocksToMove.length) {
+        blocks.splice(
+          fromIdx,
+          blocksToMove.length,
+          ...Array(blocksToMove.length)
+        );
+        blocks.splice(j, blocksToMove.length, ...blocksToMove);
+
+        break;
+      }
+    }
+
+    i = fromIdx;
+  }
+};
+
 export function part1(input: string): number {
   const blocks = parseInput(input);
-  compactFiles(blocks);
+  fragmentedCompact(blocks);
 
   return calculateChecksum(blocks);
 }
 
 export function part2(input: string): number {
   const blocks = parseInput(input);
+  compact(blocks);
 
-  return 0;
+  return calculateChecksum(blocks);
 }
