@@ -112,5 +112,28 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  return 0;
+  const map = parseInput(input);
+  const trailheads = findTrailheads(map);
+
+  let totalScore = 0;
+
+  trailheads.forEach((th) => {
+    const walkTrail = (pos: Position) => {
+      if (map.getPosHeight(pos) === 9) {
+        totalScore++;
+        return;
+      }
+
+      const validSteps = getValidSteps(map, pos);
+      if (!validSteps.length) return;
+
+      validSteps.forEach((pos) => {
+        walkTrail(pos);
+      });
+    };
+
+    walkTrail(th);
+  });
+
+  return totalScore;
 }
