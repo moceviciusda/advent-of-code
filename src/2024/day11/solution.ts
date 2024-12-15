@@ -41,5 +41,44 @@ export function part1(input: string): number {
 }
 
 export function part2(input: string): number {
-  return 0;
+  const numbers = parseInput(input);
+
+  let totalNumbers = 0;
+
+  const cache: Map<string, number> = new Map();
+
+  const change = (number: number, blinks: number): number => {
+    if (blinks === 0) return 1;
+
+    const cacheKey = `${number}=${blinks}`;
+    const cached = cache.get(cacheKey);
+    if (cached) return cached;
+
+    if (number === 0) {
+      const res = change(1, blinks - 1);
+      cache.set(cacheKey, res);
+      return res;
+    }
+
+    const sNum = number.toString();
+    if (sNum.length % 2 === 0) {
+      const firstHalf = Number(sNum.substring(0, sNum.length / 2));
+      const secondHalf = Number(sNum.substring(sNum.length / 2));
+
+      const res =
+        change(firstHalf, blinks - 1) + change(secondHalf, blinks - 1);
+      cache.set(cacheKey, res);
+      return res;
+    }
+
+    const res = change(number * 2024, blinks - 1);
+    cache.set(cacheKey, res);
+    return res;
+  };
+
+  numbers.forEach((num) => {
+    totalNumbers += change(num, 75);
+  });
+
+  return totalNumbers;
 }
